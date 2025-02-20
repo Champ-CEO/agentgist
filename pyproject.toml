@@ -1,0 +1,36 @@
+[project]
+name = "agentgist"
+version = "0.1.0"
+description = "Agentic workflow for analysing Reddit posts"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastembed>=0.5.1",
+    "langchain-community>=0.3.18",
+    "langchain-groq>=0.2.4",
+    "langchain-ollama>=0.2.3",
+    "langgraph>=0.2.74",
+    "python-dotenv>=1.0.1",
+    "streamlit>=1.42.1",
+    "watchdog>=6.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "loguru>=0.7.3",
+    "pre-commit>=4.0.1",
+    "pytest>=8.3.4",
+    "ruff>=0.9.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
+
+[tool.setuptools]
+packages = ["agentgist"]
