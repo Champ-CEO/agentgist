@@ -19,7 +19,7 @@ class ModelConfig:
 
 
 QWEN = ModelConfig("qwen2.5", 0.0, ModelProvider.OLLAMA)
-DEEPSEEK_R1 = ModelConfig("deepseek-r1:14b", 0.6, ModelProvider.OLLAMA)
+DEEPSEEK_R1 = ModelConfig("deepseek-r1:14b", 0.0, ModelProvider.OLLAMA)
 LLAMA_3_3 = ModelConfig("llama-3.3-70b-versatile", 0.0, ModelProvider.GROQ)
 
 
