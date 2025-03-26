@@ -7,10 +7,11 @@ Agentic workflow for analysing Reddit posts
 Features:
 
 - Analyze and report on the latest Reddit posts in a subreddit
-- 100% local and offline agentic workflow with LangGraph (functional API)
+- Agentic workflow with LangGraph (functional API)
 - Tool calling - agent using semantic search (embeddings) to filter posts
 - Human in the loop - specify which posts to analyze
-- Uses Ollama for LLM inference
+- Uses Groq API for LLM inference
+- Optimized with Groq's Accuracy-Preserving Strategies and Cost-Saving Components
 
 ## Agents
 
@@ -18,6 +19,21 @@ Features:
 - [`Filter Query`](agentgist/agents/filter_query.py): asks the user on which posts to focus
 - [`Post Analyzer`](agentgist/agents/post_analyzer.py): analyzes a given post (summary, takeaways, sentiment, etc.)
 - [`Report Writer`](agentgist/agents/report_writer.py): writes a report based on the analysis of the posts and user query
+
+## Groq Optimizations
+
+AgentGist utilizes advanced Groq optimization techniques:
+
+- **Dynamic Complexity Routing**: Automatically selects the most appropriate model based on task complexity
+  - Simple queries use the general-purpose model
+  - Complex report writing uses specialized models
+
+- **Token Optimization Pipeline**: Reduces API costs through:
+  - Prompt optimization that replaces verbose phrases with concise alternatives
+  - Intelligent context truncation that preserves important information
+  - Message preprocessing for token-efficient LLM calls
+
+These strategies are implemented in the [`groq_strategies.py`](agentgist/groq_strategies.py) module.
 
 ## Install
 
@@ -61,27 +77,11 @@ Install pre-commit hooks:
 uv run pre-commit install
 ```
 
-### Run Ollama
+### API Key Setup
 
-AgentGist uses Ollama for LLM inference. Watch this video to see how to install Ollama: https://www.youtube.com/watch?v=lmFCVCqOlz8
+AgentGist uses the Groq API for LLM inference. You'll need to obtain an API key:
 
-The model for tool calling and post analysis we'll use is Qwen 2.5 7B:
-
-```bash
-ollama pull qwen2.5
-```
-
-You need DeepSeek-R1 14B for writing the report:
-
-```bash
-ollama pull deepseek-r1:14b
-```
-
-Feel free to experiment with other models.
-
-### (Optional) Groq API
-
-You can also use models from Groq (get your API key from https://console.groq.com/keys).
+1. **Groq API Key**: Get your API key from https://console.groq.com/keys
 
 Rename the `.env.example` file to `.env` and add your API key inside:
 
@@ -89,7 +89,17 @@ Rename the `.env.example` file to `.env` and add your API key inside:
 mv .env.example .env
 ```
 
-Look into the [`config.py`](agentgist/config.py) file to set your preferred model.
+Then edit the `.env` file to include:
+
+```
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+The system is configured to use:
+- Groq model "llama-3.1-70b-versatile" for general tasks and tool calling
+- Groq model "deepseek-r1-distill-llama-70b" for complex report writing tasks
+
+You can modify these settings in the [`config.py`](agentgist/config.py) file.
 
 
 ## Run the Streamlit app
@@ -98,4 +108,3 @@ Run the app:
 
 ```bash
 streamlit run app.py
-```

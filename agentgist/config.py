@@ -7,7 +7,6 @@ from loguru import logger
 
 
 class ModelProvider(str, Enum):
-    OLLAMA = "ollama"
     GROQ = "groq"
 
 
@@ -18,9 +17,8 @@ class ModelConfig:
     provider: ModelProvider
 
 
-QWEN = ModelConfig("qwen2.5", 0.0, ModelProvider.OLLAMA)
-DEEPSEEK_R1 = ModelConfig("deepseek-r1:14b", 0.0, ModelProvider.OLLAMA)
-LLAMA_3_3 = ModelConfig("llama-3.3-70b-versatile", 0.0, ModelProvider.GROQ)
+LLAMA_3_3 = ModelConfig("llama-3.3-70b-versatile", 0.1, ModelProvider.GROQ)
+DEEPSEEK_R1 = ModelConfig("deepseek-r1-distill-llama-70b", 0.2, ModelProvider.GROQ)
 
 
 class Config:
@@ -28,8 +26,8 @@ class Config:
     LOG_FILE = "app.log"
 
     class Model:
-        DEFAULT = QWEN
-        REPORT_WRITER = DEEPSEEK_R1
+        DEFAULT = LLAMA_3_3  # For general tasks
+        REPORT_WRITER = DEEPSEEK_R1  # For complex tasks
 
     class Preprocessing:
         EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"

@@ -1,7 +1,8 @@
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import PromptTemplate
 from langgraph.func import task
+import json
 
 from agentgist.data import Comment, Post, PostAnalysis
 
@@ -15,7 +16,7 @@ Analyze the post and associated comments:
 
 <comments>
 {comments}
-<comments>
+</comments>
 
 The analysis must contain:
 
@@ -23,15 +24,13 @@ The analysis must contain:
 - Key points from the post and comments (top 3)
 - Main topics discussed in the post and comments (top 3)
 - Controversial takeaways from the comments (top 3)
-- Sentiment of the post and comments (choose on from happiness, anger, sadness, fear, surprise, disgust, trust, anticipation)
+- Sentiment of the post and comments (choose one from happiness, anger, sadness, fear, surprise, disgust, trust, anticipation)
 
 Your analysis should respond to the user query:
 
 <user_query>
 {user_query}
 </user_query>
-
-Your response must be a JSON.
 """.strip()
 )
 
@@ -84,18 +83,47 @@ def _create_comment_text(comment: Comment) -> str:
 
 @task
 def analyze_post(llm: BaseChatModel, user_query: str, post: Post) -> PostAnalysis:
-    llm = llm.with_structured_output(PostAnalysis, method="json_schema")
+    # For Groq compatibility, we will use a system message to request JSON output
+    # instead of using with_structured_output with method="json_mode"
 
-    return llm.invoke(
-        [
-            HumanMessage(
-                content=ANALYZE_POST_PROMPT.format(
-                    post=_create_post_text(post),
-                    comments="\n".join(
-                        [_create_comment_text(comment) for comment in post.comments]
-                    ),
-                    user_query=user_query,
-                ),
-            ),
-        ]
+    schema = PostAnalysis.schema()
+    schema_str = json.dumps(schema, indent=2)
+
+    system_message = SystemMessage(
+        content=f"You must respond with a JSON object that conforms to this schema: {schema_str}"
     )
+
+    human_message = HumanMessage(
+        content=ANALYZE_POST_PROMPT.format(
+            post=_create_post_text(post),
+            comments="\n".join([_create_comment_text(comment) for comment in post.comments]),
+            user_query=user_query,
+        ),
+    )
+
+    # Get the raw JSON response
+    response = llm.invoke([system_message, human_message])
+    response_content = response.content
+
+    # Parse the JSON response into a PostAnalysis object
+    try:
+        # Handle potential JSON in markdown code blocks
+        if "```json" in response_content:
+            json_str = response_content.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_content:
+            json_str = response_content.split("```")[1].split("```")[0].strip()
+        else:
+            json_str = response_content
+
+        # Parse the JSON and create a PostAnalysis object
+        json_data = json.loads(json_str)
+        return PostAnalysis(**json_data)
+    except Exception as e:
+        # Fallback with minimal valid data if JSON parsing fails
+        return PostAnalysis(
+            summary=f"Error parsing response: {str(e)}. Original response: {response_content[:100]}...",
+            key_points=["Analysis failed", "JSON parsing error", "Check logs"],
+            topics=["error"],
+            controversies=["none"],
+            sentiment="neutral",
+        )
